@@ -1,0 +1,17 @@
+{
+  "name": "spotifytogoogle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "casperjs": "^1.1.3",
+    "phantomjs": "^2.1.7",
+    "spotify-web-api-node": "^2.3.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ron Lapushner",
+  "license": "ISC"
+}
