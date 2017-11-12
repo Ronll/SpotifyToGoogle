@@ -4,11 +4,6 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-<<<<<<< HEAD
-=======
-    "casperjs": "^1.1.3",
-    "phantomjs": "^2.1.7",
->>>>>>> bf7d95808dea24dcc4485bd738d90c729a79104f
     "spotify-web-api-node": "^2.3.6"
   },
   "devDependencies": {},
