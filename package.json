@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "spotify-web-api-node": "^2.3.6"
+    "puppeteer": "^0.13.0"
   },
   "devDependencies": {},
   "scripts": {
