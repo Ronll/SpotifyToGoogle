@@ -1,58 +1,86 @@
-const CONFIG = require('./config/config.js');
-const SpotifyWebApi = require('spotify-web-api-node');
-const spotifyApi =  new SpotifyWebApi();
-const MAX_LIMIT_GET_TRACKS = 50;
-const fs = require('fs')
+const https = require('https')
+const getSpotifyAPIToken = require('./aquireSpotifyToken')
 
-spotifyApi.setAccessToken(CONFIG.spotifyAPIKey);
+const BASE_URL = 'api.spotify.com'
+const MAX_LIMIT = 50
+const SAVED_SONGS_PATH = `/v1/me/tracks?limit=${MAX_LIMIT}`
+const TRACK = 'track'
+const ARTISTS = 'artists'
+const NAME = 'name'
+const TOTAL = 'total'
+const ITEMS = 'items'
 
-let allSongsMetaData = [];
-let songOffset = 0;
-let numberOfSongs = 999999;
+async function getSavedSongs(){
+  const spotifyAPIToken = await getSpotifyAPIToken()
+  let songs = []
+  let totalNumberOfSongs = await getTotalNumberOfSongs()
+  
+  let savedSongsRequests = []
+  for(let offset = 0;totalNumberOfSongs > offset; offset += MAX_LIMIT){
+    let savedSongRequest = GetSavedSongsChunk(offset)
+      .then((chunk) => { return chunk[ITEMS] })
+      .then((songsChunk) => { 
+        songs = songs.concat(songsChunk) })
 
-let getAllSongsMetaData = new Promise((resolve, reject) => {
-  let songsMetaData = [];
-
-  collectAllSongsMetadata( songOffset, MAX_LIMIT_GET_TRACKS);
-
-  function collectAllSongsMetadata( songOffset, MAX_LIMIT_GET_TRACKS){
-    getNextSavedTracksBatch(MAX_LIMIT_GET_TRACKS, songOffset).then((data) => {
-      numberOfSongs = data.body.total;
-      offset = data.body.offset + MAX_LIMIT_GET_TRACKS;
-      songsMetaData.push(data.body.items);
-
-      if(songOffset + MAX_LIMIT_GET_TRACKS < numberOfSongs)
-        collectAllSongsMetadata(offset, MAX_LIMIT_GET_TRACKS)
-      else
-        resolve(songsMetaData);
-    }).catch((err) => reject(err)) 
+    savedSongsRequests.push(savedSongRequest)
   }
+  
+  await Promise.all(savedSongsRequests)
 
-  function getNextSavedTracksBatch(MAX_LIMIT_GET_TRACKS, songOffset){
-    return spotifyApi.getMySavedTracks({
-      limit : MAX_LIMIT_GET_TRACKS,
-      offset: songOffset 
-    })
-  }
+  songs = extractMeta(songs)
 
-});
-
-let assembleSongsHTTPRequests = function(responses) {
-  let allSongs = [];
-  responses.reduce( (a, b) => { 
-    for(let song of b){
-      let result = {}
-      result.name = song.track.name
-      console.log(song.track.artists)
-      result.artists = []
-      for(let artist of song.track.artists){
-        result.artists.push(artist.name) 
-        allSongs.push(result)
-      }
-    }
-  }, allSongs);
-
-  fs.writeFile( "result.json", JSON.stringify(allSongs), ()=> {console.log('BIG SUCCESS')})
+  return songs
 }
 
-return getAllSongsMetaData.then(assembleSongsHTTPRequests);
+function extractMeta(songsData){
+  let songs = []
+
+  for(let songData of songsData){
+    let name = songData[TRACK][NAME]
+    let artists = extractArtists(songData)
+
+    songs.push({name: name, artists: artists})
+  }
+
+  return songs
+}
+
+function extractArtists(songData) {
+  
+  let artistsData = songData[TRACK][ARTISTS]
+  let artists = []        
+  
+  for (artistData of artistsData) {
+    let artistName = artistData[NAME]
+    artists.push(artistName)
+  }
+
+  return artists
+}
+
+async function getTotalNumberOfSongs(){
+  let songsData = await GetSavedSongsChunk()
+  return songsData[TOTAL]
+}
+
+function GetSavedSongsChunk(offset = 0){
+  return new Promise((resolve, reject) => {
+    https.get({
+      host: BASE_URL,
+      path: SAVED_SONGS_PATH + `&offset=${offset}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    }, (res) => {
+      let body = ''
+      res.on('data', (data) => { body += data})
+      res.on('end', () => { resolve(JSON.parse(body)) })
+    }).on('error', (e) => {
+      console.log('request to spotify failed: ', e.message)
+      reject(e)
+    })
+  })
+}
+
+module.exports = getSavedSongs

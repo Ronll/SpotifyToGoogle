@@ -7,7 +7,7 @@ const
   GOOGLE_MUSIC_LOGO_SELECTOR = 'div.music-logo',
   FIVE_MINUTES_IN_MILLISECOUNDS = 1000 * 60 * 5
 
-async function getCookies() {
+async function getGoogleSession() {
   const browser = await puppeteer.launch({headless: false})
   const page = await browser.newPage()
   
@@ -25,6 +25,4 @@ async function getCookies() {
   return cookies
 }
 
-module.exports = async () => {
-    return await getCookies()
-}
+module.exports = getGoogleSession

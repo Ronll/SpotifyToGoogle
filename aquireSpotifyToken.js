@@ -10,7 +10,7 @@ const
   USERNAME_FIELD_SELECTOR = '#login-username',
   FIVE_MINUTES_IN_MILLISECOUNDS = 1000 * 60 * 5
 
-async function getToken() {
+async function getSpotifyToken() {
   const browser = await puppeteer.launch({headless: false})
   const page = await browser.newPage()
   
@@ -36,10 +36,4 @@ async function getToken() {
   return token
 }
 
-(async () => {
-  console.log(await getToken())
-})()
-
-module.exports = async () => {
-    return await getToken()
-}
+module.exports = getSpotifyToken
