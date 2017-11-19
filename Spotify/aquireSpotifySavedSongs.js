@@ -1,14 +1,16 @@
-const https = require('https')
-const getSpotifyAPIToken = require('./aquireSpotifyToken')
+const 
+  https = require('https'),
+  getSpotifyAPIToken = require('./aquireSpotifyToken')
 
-const BASE_URL = 'api.spotify.com'
-const MAX_LIMIT = 50
-const SAVED_SONGS_PATH = `/v1/me/tracks?limit=${MAX_LIMIT}`
-const TRACK = 'track'
-const ARTISTS = 'artists'
-const NAME = 'name'
-const TOTAL = 'total'
-const ITEMS = 'items'
+const 
+  BASE_URL = 'api.spotify.com',
+  MAX_LIMIT = 50,
+  SAVED_SONGS_PATH = `/v1/me/tracks?limit=${MAX_LIMIT}`,
+  TRACK = 'track',
+  ARTISTS = 'artists',
+  NAME = 'name',
+  TOTAL = 'total',
+  ITEMS = 'items'
 
 async function getSavedSongs(){
   const spotifyAPIToken = await getSpotifyAPIToken()
