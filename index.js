@@ -1,5 +1,8 @@
-const aquireSpotifySongs = require('./Spotify/aquireSpotifySavedSongs')
-const addSongsToGoogle = require('./Google Music/addSongsToGoogle')
+const 
+  aquireSpotifySongs = require('./Spotify/aquireSpotifySavedSongs')
+  addSongsToGoogle = require('./Google Music/addSongsToGoogle')
+
+main()
 
 async function main() {
   console.log('Lets move your songs!')
@@ -10,7 +13,7 @@ async function main() {
   console.log(`Great! we found ${songs.length} songs!`)
   console.log('lets save them to Google Music')
 
-  addSongsToGoogle(songs)
+  await addSongsToGoogle(songs)
 
   console.log('Songs added!')
 }

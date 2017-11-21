@@ -11,9 +11,11 @@ const
   NAME = 'name',
   TOTAL = 'total',
   ITEMS = 'items'
+  
+let spotifyAPIToken = ''
 
 async function getSavedSongs(){
-  const spotifyAPIToken = await getSpotifyAPIToken()
+  spotifyAPIToken = await getSpotifyAPIToken()
   let songs = []
   let totalNumberOfSongs = await getTotalNumberOfSongs()
   
@@ -72,7 +74,7 @@ function GetSavedSongsChunk(offset = 0){
       path: SAVED_SONGS_PATH + `&offset=${offset}`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${spotifyAPIToken}`
       }
     }, (res) => {
       let body = ''

@@ -1,6 +1,7 @@
-const puppeteer = require('puppeteer')
-const aquireGoogleSession = require('./aquireGoogleSession')
-const qs = require('querystring')
+const
+  puppeteer = require('puppeteer')
+  aquireGoogleSession = require('./aquireGoogleSession')
+  qs = require('querystring')
 
 const 
   BASE_URL = 'https://play.google.com/music/listen#/sr/',
@@ -14,18 +15,19 @@ const
   LABEL_SELECTOR = '#label'
   ADD_TO_LIBRARY = 'Add to library'
   ENTER_KEY = 'Enter'
+  SONGS_RESULT_SELECTOR = 'table.song-table'
 
-;(async () => {
-    await addSongsToGoogle([{name: 'One', artists: ['Metalica']}, {name: 'Nothing else matters', artists: ['metalica']}])
-})()
+let
+  browser,
+  page,
+  googleCookies
 
 async function addSongsToGoogle(songs) {
-  const googleCookies = await aquireGoogleSession()
-    
-  const browser = await puppeteer.launch({headless: false})
-  const page = await browser.newPage()
-  await page.setCookie(...googleCookies)
+  googleCookies = await aquireGoogleSession()
+  browser = await puppeteer.launch({headless: false})
+  page = await browser.newPage()
   
+  await page.setCookie(...googleCookies)
   await page.goto(BASE_URL)
   await ignoreNoFlashWarning()
 
@@ -33,43 +35,56 @@ async function addSongsToGoogle(songs) {
     await addSong(song)
   }
 
-  async function addSong(song){
+  await browser.close()
+}
+
+async function addSong(song){
+  try{
     await searchSong(song)
     await addFirstResult()
-  }
-
-  async function ignoreNoFlashWarning(){
-    await page.waitForSelector(IGNORE_FLASH_BTN_SELECTOR, {visible: true})
-    await page.click(IGNORE_FLASH_BTN_SELECTOR)
-  }
-
-  async function searchSong(song){
-    let searchTerm = `${song.name} by ${song.artists.join(' ')}`
-    let searchURL = `${BASE_URL}${qs.escape(searchTerm)}`
-    await page.goto('about:blank')
-    await page.goto(searchURL)
-    await ignoreNoFlashWarning()
-  }
-
-  async function addFirstResult(){
-    await page.waitForSelector(FIRST_RESULT_SELECTOR)
-    await page.hover(FIRST_RESULT_SELECTOR)
-    await page.click(FIRST_RESULT_MENU_SELECTOR)
-    
-    let addBtnEl = await page.$(ADD_BTN_SELECTOR)
-    if(await isDisplayed(addBtnEl)){
-      await addBtnEl.click()
-      await page.waitForSelector(LABEL_SELECTOR, {visible: true})
-    }else
-      console.log("already in saved")
-  }
-
-  async function isDisplayed(el){
-    if(await el.boundingBox() === null)
-      return false
-    else
-      return true
+  }catch(e){
+    console.log("could not find/add " + song.name)
+    console.log(e)
   }
 }
 
+async function ignoreNoFlashWarning(){
+  await page.waitForSelector(IGNORE_FLASH_BTN_SELECTOR, {visible: true})
+  await page.click(IGNORE_FLASH_BTN_SELECTOR)
+}
+
+async function searchSong(song){
+  let searchTerm = `${song.name} by ${song.artists.join(' ')}`
+  let searchURL = `${BASE_URL}${qs.escape(searchTerm)}`
+  await page.goto('about:blank')
+  await page.goto(searchURL)
+  await ignoreNoFlashWarning()
+  await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})
+}
+
+async function addFirstResult(){
+  console.log('add first')
+  await page.waitForSelector(FIRST_RESULT_SELECTOR, {visible: true})
+  await page.hover(FIRST_RESULT_SELECTOR)
+  await page.click(FIRST_RESULT_MENU_SELECTOR)
+  
+  console.log('looking for button')
+  
+  if(await isDisplayed(ADD_BTN_SELECTOR)){
+    console.log('displayed')
+    await addBtnEl.click()
+    await page.waitForSelector(LABEL_SELECTOR, {visible: true})
+  }else
+    console.log("already in saved")
+}
+
+async function isDisplayed(selector){
+  await page.waitForSelector(selector, {visible: true})
+  await page.waitFor(1000)
+  let addBtnEl = await page.$(selector)
+  if(await el.boundingBox() === null)
+    return false
+  else
+    return true
+}
 module.exports = addSongsToGoogle
