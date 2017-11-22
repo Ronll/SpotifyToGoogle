@@ -16,9 +16,13 @@ async function getGoogleSession() {
   await page.waitForSelector(EMAIL_FIELD_SELECTOR)
 
   //USER LOGS IN
-
-  await page.waitForSelector(GOOGLE_MUSIC_LOGO_SELECTOR,
-    {timeout: FIVE_MINUTES_IN_MILLISECOUNDS})
+  
+  try{
+    await page.waitForSelector(GOOGLE_MUSIC_LOGO_SELECTOR,
+      {timeout: FIVE_MINUTES_IN_MILLISECOUNDS})
+  }catch(e){
+    console.log('Took Too long to log in, start over')
+  }
   const cookies = await page.cookies(BASE_URL)
   
   await browser.close()

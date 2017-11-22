@@ -39,12 +39,25 @@ async function addSongsToGoogle(songs) {
 }
 
 async function addSong(song){
+  await searchSong(song)
   try{
-    await searchSong(song)
+    await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})  
+  }catch(e){
+    console.log(song.name + ' not found')
+  }
+  try{
     await addFirstResult()
   }catch(e){
-    console.log("could not find/add " + song.name)
+    console.log("could not add " + song.name)
     console.log(e)
+  }
+}
+
+async function waitForSongResult(){
+  try{
+    await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})  
+  }catch(e){
+    console.log('song not found')
   }
 }
 
@@ -59,7 +72,7 @@ async function searchSong(song){
   await page.goto('about:blank')
   await page.goto(searchURL)
   await ignoreNoFlashWarning()
-  await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})
+  
 }
 
 async function addFirstResult(){
