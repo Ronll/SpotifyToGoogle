@@ -15,7 +15,9 @@ const
   LABEL_SELECTOR = '#label'
   ADD_TO_LIBRARY = 'Add to library'
   ENTER_KEY = 'Enter'
-  SONGS_RESULT_SELECTOR = 'table.song-table'
+  SONGS_RESULT_SELECTOR = 'table.song-table',
+  STYLE = 'style',
+  DISPLAY = 'display'
 
 let
   browser,
@@ -31,33 +33,33 @@ async function addSongsToGoogle(songs) {
   await page.goto(BASE_URL)
   await ignoreNoFlashWarning()
 
+  let results = { failed: [], added: []  }
   for(song of songs){
-    await addSong(song)
+    let songAdded = await addSong(song)
+    songAdded ? results.added.push(song) : results.failed.push(song)
   }
 
   await browser.close()
+
+  return results
 }
 
 async function addSong(song){
   await searchSong(song)
-  try{
-    await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})  
-  }catch(e){
+
+  let el = await page.$(SONGS_RESULT_SELECTOR)
+  if(el === null ){
     console.log(song.name + ' not found')
+    return false
   }
+  
   try{
-    await addFirstResult()
+    let songAdded = await addFirstResult()
+    return songAdded
   }catch(e){
     console.log("could not add " + song.name)
     console.log(e)
-  }
-}
-
-async function waitForSongResult(){
-  try{
-    await page.waitForSelector(SONGS_RESULT_SELECTOR, {visible: true})  
-  }catch(e){
-    console.log('song not found')
+    return false
   }
 }
 
@@ -70,34 +72,33 @@ async function searchSong(song){
   let searchTerm = `${song.name} by ${song.artists.join(' ')}`
   let searchURL = `${BASE_URL}${qs.escape(searchTerm)}`
   await page.goto('about:blank')
-  await page.goto(searchURL)
+  await page.goto(searchURL, {waitUntil: ['load', 'domcontentloaded', 'networkidle0']})
   await ignoreNoFlashWarning()
-  
 }
 
 async function addFirstResult(){
-  console.log('add first')
-  await page.waitForSelector(FIRST_RESULT_SELECTOR, {visible: true})
+  await page.waitForSelector(FIRST_RESULT_SELECTOR, {visible: true, timeout: 50000})
   await page.hover(FIRST_RESULT_SELECTOR)
+  await page.waitForSelector(FIRST_RESULT_MENU_SELECTOR, {visible: true, timeout: 50000})
   await page.click(FIRST_RESULT_MENU_SELECTOR)
   
   console.log('looking for button')
   
-  if(await isDisplayed(ADD_BTN_SELECTOR)){
+  let displayProperty = await page.evaluate((ADD_BTN_SELECTOR,STYLE, DISPLAY) => {
+    let el = document.querySelector(ADD_BTN_SELECTOR)
+    let displayProperty = el[STYLE][DISPLAY]
+    return Promise.resolve(displayProperty)
+  }, ADD_BTN_SELECTOR, STYLE, DISPLAY)
+  
+  if(displayProperty !== "none"){
     console.log('displayed')
-    await addBtnEl.click()
+    await page.click(ADD_BTN_SELECTOR)
     await page.waitForSelector(LABEL_SELECTOR, {visible: true})
-  }else
+    return true
+  }else{
     console.log("already in saved")
+    return false
+  }
 }
 
-async function isDisplayed(selector){
-  await page.waitForSelector(selector, {visible: true})
-  await page.waitFor(1000)
-  let addBtnEl = await page.$(selector)
-  if(await el.boundingBox() === null)
-    return false
-  else
-    return true
-}
 module.exports = addSongsToGoogle
