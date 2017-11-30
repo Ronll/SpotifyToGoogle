@@ -14,9 +14,15 @@ async function main() {
   console.log('lets save them to Google Music')
 
   let results = await addSongsToGoogle(songs)
+  console.log(results)  
 
-  for(song in results.failed)
-    console.log('could not add ' + song.name)
-    
-  console.log(results.length + 'Songs added!')
+  console.log('Failed to save:')
+  for(song of results.failed)
+    console.log(` ${song.name}`)
+  console.log(results.failed.length + ' Songs failed to add...')  
+  
+  console.log('Saved songs:')
+  for(song of results.added)
+    console.log(` ${song.name}`)
+  console.log(results.added.length + ' Songs added!')
 }

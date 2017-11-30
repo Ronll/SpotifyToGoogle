@@ -17,7 +17,8 @@ const
   ENTER_KEY = 'Enter'
   SONGS_RESULT_SELECTOR = 'table.song-table',
   STYLE = 'style',
-  DISPLAY = 'display'
+  DISPLAY = 'display',
+  MINUTE_IN_MILLISECOUNDS = 1000 * 60
 
 let
   browser,
@@ -27,11 +28,10 @@ let
 async function addSongsToGoogle(songs) {
   googleCookies = await aquireGoogleSession()
   browser = await puppeteer.launch({headless: false})
-  page = await browser.newPage()
+  page = await browser.newPage() 
   
   await page.setCookie(...googleCookies)
   await page.goto(BASE_URL)
-  await ignoreNoFlashWarning()
 
   let results = { failed: [], added: []  }
   for(song of songs){
@@ -45,22 +45,27 @@ async function addSongsToGoogle(songs) {
 }
 
 async function addSong(song){
-  await searchSong(song)
-
-  let el = await page.$(SONGS_RESULT_SELECTOR)
-  if(el === null ){
-    console.log(song.name + ' not found')
-    return false
+  try{
+    var wasFound = await searchSong(song)
+  }catch(e){
+    console.log(e)
+    var wasFound = false
   }
+
+  if (!wasFound)
+    return false
   
   try{
-    let songAdded = await addFirstResult()
-    return songAdded
+    var wasAdded = await addFirstResult()
   }catch(e){
-    console.log("could not add " + song.name)
     console.log(e)
-    return false
+    var wasAdded = false
   }
+  
+  if(!wasAdded)
+    return false
+
+  return true
 }
 
 async function ignoreNoFlashWarning(){
@@ -72,17 +77,21 @@ async function searchSong(song){
   let searchTerm = `${song.name} by ${song.artists.join(' ')}`
   let searchURL = `${BASE_URL}${qs.escape(searchTerm)}`
   await page.goto('about:blank')
-  await page.goto(searchURL, {waitUntil: ['load', 'domcontentloaded', 'networkidle0']})
+  await page.goto(searchURL, {waitUntil: ['load', 'domcontentloaded', 'networkidle0'], timeout: MINUTE_IN_MILLISECOUNDS})
   await ignoreNoFlashWarning()
+
+  let el = await page.$(SONGS_RESULT_SELECTOR)
+  if(el === null){
+    return false
+  }else
+    return true
 }
 
 async function addFirstResult(){
-  await page.waitForSelector(FIRST_RESULT_SELECTOR, {visible: true, timeout: 50000})
+  await page.waitForSelector(FIRST_RESULT_SELECTOR, {visible: true})
   await page.hover(FIRST_RESULT_SELECTOR)
-  await page.waitForSelector(FIRST_RESULT_MENU_SELECTOR, {visible: true, timeout: 50000})
+  await page.waitForSelector(FIRST_RESULT_MENU_SELECTOR, {visible: true})
   await page.click(FIRST_RESULT_MENU_SELECTOR)
-  
-  console.log('looking for button')
   
   let displayProperty = await page.evaluate((ADD_BTN_SELECTOR,STYLE, DISPLAY) => {
     let el = document.querySelector(ADD_BTN_SELECTOR)
