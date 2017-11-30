@@ -27,7 +27,7 @@ let
 
 async function addSongsToGoogle(songs) {
   googleCookies = await aquireGoogleSession()
-  browser = await puppeteer.launch({headless: false})
+  browser = await puppeteer.launch()
   page = await browser.newPage() 
   
   await page.setCookie(...googleCookies)
@@ -100,12 +100,10 @@ async function addFirstResult(){
   }, ADD_BTN_SELECTOR, STYLE, DISPLAY)
   
   if(displayProperty !== "none"){
-    console.log('displayed')
     await page.click(ADD_BTN_SELECTOR)
     await page.waitForSelector(LABEL_SELECTOR, {visible: true})
     return true
   }else{
-    console.log("already in saved")
     return false
   }
 }
