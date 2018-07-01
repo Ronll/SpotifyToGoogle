@@ -2,11 +2,11 @@ const puppeteer = require('puppeteer')
 
 const 
   BASE_URL = 'https://developer.spotify.com/web-api/console/get-current-user-saved-tracks/',
-  GET_TOKEN_BTN_SELECTOR = 'input[data-target="getOAuthToken"]',
+  GET_TOKEN_BTN_SELECTOR = 'button[data-target="#oauth-modal"]',
   USR_LIB_CHECKBOX_SELECTOR = '#scope-user-library-read',
   REQ_TOKEN_BTN_SELECTOR = '#oauthRequestToken',
   LOGIN_BUTTON_SELECTOR = 'a.btn',
-  TOKEN_FIELD_SELECTOR = '#oauth',
+  TOKEN_FIELD_SELECTOR = '#oauth-input',
   USERNAME_FIELD_SELECTOR = '#login-username',
   FIVE_MINUTES_IN_MILLISECOUNDS = 1000 * 60 * 5
 
